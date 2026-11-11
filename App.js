@@ -1,4 +1,3 @@
-import React, { useCallback } from "react";
 import { StyleSheet, Text, View, Dimensions, Pressable } from "react-native";
 import Animated, {
   useSharedValue,
@@ -22,7 +21,22 @@ const CIRCLE_LENGTH = 1000;
 const R = CIRCLE_LENGTH / (2 * Math.PI);
 
 export default function App() {
-  const AnimatedCircle = Animated.createAnimatedComponent(Circle);// do not remove this code from here
+  const AnimatedCircle = Animated.createAnimatedComponent(Circle); // do not remove this code from here
+
+  const shared = useSharedValue(0);
+  const circlePercentage = useDerivedValue(() =>
+    String(Math.floor(shared.value * 100)),
+  );
+  const startAnimation = () => {
+    shared.value = withTiming(shared.value ? 0 : 1, { duration: 2000 });
+  };
+
+  const animatedProps = useAnimatedProps(() => ({
+    strokeDasharray: [
+      shared.value * CIRCLE_LENGTH,
+      (1 - shared.value) * CIRCLE_LENGTH,
+    ],
+  }));
 
   return (
     <View style={styles.container}>
@@ -41,16 +55,18 @@ export default function App() {
           stroke={STROKE_COLOR}
           strokeWidth={25}
           strokeDashoffset={250}
-          strokeDasharray={[300, 700]} // make this prop animated
+          animatedProps={animatedProps}
+          // strokeDasharray={[300, 700]} // make this prop animated
           strokeLinecap={"butt"}
           fill={BACKGROUND_COLOR}
         ></AnimatedCircle>
       </Svg>
       <ReText
         style={styles.progressText}
-        text={{ value: "30" }} // string derived from shared value with useDerivedValue hook should be used here
+        text={circlePercentage} // string derived from shared value with useDerivedValue hook should be used here
       />
       <Pressable
+        onPress={startAnimation}
         style={({ pressed }) => [
           styles.button,
           {
